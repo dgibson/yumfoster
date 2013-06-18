@@ -28,6 +28,7 @@ class YumFoster(yum.YumBase):
     def __init__(self):
         yum.YumBase.__init__(self)
 
+        print "Loading keepers...",
         try:
             f = open(KEEPERSFILE)
             klist = f.readlines()
@@ -37,16 +38,22 @@ class YumFoster(yum.YumBase):
             klist = []
 
         self.keepers = set(s.strip() for s in klist)
+        print "done."
+
+        print "Computing package requirements..."
+        self.reqpkg = {}
+        for pkg in self.rpmdb:
+            self.reqpkg[pkg] = pkg.requiring_packages()
+        self.candidates = set(p for p in self.reqpkg if not self.reqpkg[p])
+        print "done."
 
     def interact(self):
         droppers = set()
         abort = None
 
-        for pkg in self.rpmdb:
+        for pkg in self.candidates:
             n = pname(pkg)
 
-            if pkg.requiring_packages():
-                continue
             if n in self.keepers:
                 continue
 
