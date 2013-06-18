@@ -6,6 +6,8 @@ import os
 import errno
 import sys
 import subprocess
+import tty
+import termios
 
 KEEPERSFILE="/var/lib/yumfoster/keepers"
 
@@ -49,7 +51,9 @@ class YumFoster(yum.YumBase):
                 continue
 
             while True:
-                act = raw_input("Keep %s [Synixq]? " % n).lower()
+                sys.stdout.write("Keep %s [Synixq]? " % n)
+                act = sys.stdin.read(1).lower()
+                sys.stdout.write(act + '\n')
 
                 if (act == 's') or (not act):
                     break
@@ -84,5 +88,16 @@ class YumFoster(yum.YumBase):
 
             remove_packages(droppers)
 
-yf = YumFoster()
-yf.interact()
+oldtermios = None
+try:
+    if sys.stdin.isatty():
+        oldtermios = termios.tcgetattr(sys.stdin)
+        tty.setcbreak(sys.stdin)
+
+    yf = YumFoster()
+    yf.interact()
+finally:
+    if oldtermios is not None:
+        termios.tcsetattr(sys.stdin, termios.TCSAFLUSH, oldtermios)
+    
+
