@@ -15,13 +15,8 @@ def pname(pkg):
     return "%s.%s" % (pkg.name, pkg.arch)
 
 
-def fname(pkg):
-    return "%s-%s-%s.%s" % (pkg.name, pkg.version,
-                            pkg.release, pkg.arch)
-
-
 def remove_packages(pkgs):
-    args = ["rpm", "-evh"] + [fname(p) for p in pkgs]
+    args = ["rpm", "-evh"] + [str(p) for p in pkgs]
     subprocess.check_call(args)
 
 class YumFoster(yum.YumBase):
@@ -78,10 +73,10 @@ class YumFoster(yum.YumBase):
                 k = self.keeping[pkg]
                 if len(k) > 1:
                     sys.stdout.write("%s is keeping %d packages installed:\n"
-                                     % (fname(pkg), len(k) - 1))
-                    sys.stdout.write(", ".join(fname(p) for p in k if p is not pkg) + "\n")
+                                     % (str(pkg), len(k) - 1))
+                    sys.stdout.write(", ".join(str(p) for p in k if p is not pkg) + "\n")
                 else:
-                    sys.stdout.write("%s:\n" % fname(pkg))
+                    sys.stdout.write("%s:\n" % str(pkg))
 
                 sys.stdout.write("Keep [Synixq] ? ")
                 act = sys.stdin.read(1).lower()
