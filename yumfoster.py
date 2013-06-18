@@ -43,9 +43,26 @@ class YumFoster(yum.YumBase):
         print "Computing package requirements..."
         self.reqpkg = {}
         for pkg in self.rpmdb:
-            self.reqpkg[pkg] = pkg.requiring_packages()
+            self.reqpkg[pkg] = set(pkg.requiring_packages())
         self.candidates = set(p for p in self.reqpkg if not self.reqpkg[p])
+
+        self.keeping = {}
+        for pkg in self.candidates:
+            self.keeping[pkg] = self.keepclose(pkg)
         print "done."
+
+
+    def keepclose(self, pkg):
+        keeping = set((pkg,))
+        while True:
+            n = len(keeping)
+            for p, req in self.reqpkg.items():
+                if req and (req <= keeping):
+                    keeping.add(p)
+            if len(keeping) == n:
+                break
+        return keeping
+
 
     def interact(self):
         droppers = set()
@@ -58,9 +75,17 @@ class YumFoster(yum.YumBase):
                 continue
 
             while True:
-                sys.stdout.write("Keep %s [Synixq]? " % n)
+                k = self.keeping[pkg]
+                if len(k) > 1:
+                    sys.stdout.write("%s is keeping %d packages installed:\n"
+                                     % (fname(pkg), len(k) - 1))
+                    sys.stdout.write(", ".join(fname(p) for p in k if p is not pkg) + "\n")
+                else:
+                    sys.stdout.write("%s:\n" % fname(pkg))
+
+                sys.stdout.write("Keep [Synixq] ? ")
                 act = sys.stdin.read(1).lower()
-                sys.stdout.write(act + '\n')
+                sys.stdout.write(act + '\n\n')
 
                 if (act == 's') or (not act):
                     break
