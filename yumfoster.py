@@ -72,13 +72,11 @@ class YumFoster(yum.YumBase):
             while True:
                 k = self.keeping[pkg]
                 if len(k) > 1:
-                    sys.stdout.write("%s is keeping %d packages installed:\n"
-                                     % (str(pkg), len(k) - 1))
-                    sys.stdout.write(", ".join(str(p) for p in k if p is not pkg) + "\n")
-                else:
-                    sys.stdout.write("%s:\n" % str(pkg))
+                    sys.stdout.write("%s is keeping %d packages installed: %s\n"
+                                     % (str(pkg), len(k) - 1,
+                                        ", ".join(str(p) for p in k if p is not pkg)))
 
-                sys.stdout.write("Keep [Synixq] ? ")
+                sys.stdout.write("Keep %s [Synixq] ? " % str(pkg))
                 act = sys.stdin.read(1).lower()
                 sys.stdout.write(act + '\n\n')
 
