@@ -71,7 +71,7 @@ class YumFoster(yum.YumBase):
                           reverse=True):
             n = pname(pkg)
 
-            if n in self.keepers:
+            if (pkg in droppers) or (n in self.keepers):
                 continue
 
             while True:
@@ -81,7 +81,7 @@ class YumFoster(yum.YumBase):
                     sys.stdout.write("%s is keeping %d packages installed: %s\n"
                                      % (str(pkg), len(kx), pliststr(kx)))
 
-                sys.stdout.write("Keep %s [Synixq] ? " % str(pkg))
+                sys.stdout.write("Keep %s [Synpixq] ? " % str(pkg))
                 act = sys.stdin.read(1).lower()
                 sys.stdout.write(act + '\n\n')
 
@@ -92,6 +92,9 @@ class YumFoster(yum.YumBase):
                     break
                 elif act == 'n':
                     droppers.add(pkg)
+                    break
+                elif act == 'p':
+                    droppers |= k
                     break
                 elif act == 'i':
                     print pkg.description
