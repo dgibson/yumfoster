@@ -20,7 +20,9 @@ def pliststr(pset):
 
 
 def remove_packages(pkgs):
-    args = ["rpm", "-evh"] + [str(p) for p in pkgs]
+    args = ["rpm", "-evh"]
+    for p in pkgs:
+        args.append("%s-%s-%s.%s" % (p.name, p.version, p.release, p.arch))
     subprocess.check_call(args)
 
 class YumFoster(yum.YumBase):
