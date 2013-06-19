@@ -15,6 +15,10 @@ def pname(pkg):
     return "%s.%s" % (pkg.name, pkg.arch)
 
 
+def pliststr(pset):
+    return ", ".join(str(p) for p in pset)
+
+
 def remove_packages(pkgs):
     args = ["rpm", "-evh"] + [str(p) for p in pkgs]
     subprocess.check_call(args)
@@ -63,7 +67,8 @@ class YumFoster(yum.YumBase):
         droppers = set()
         abort = None
 
-        for pkg in self.candidates:
+        for pkg in sorted(self.candidates, key=lambda p: len(self.keeping[p]),
+                          reverse=True):
             n = pname(pkg)
 
             if n in self.keepers:
@@ -71,10 +76,10 @@ class YumFoster(yum.YumBase):
 
             while True:
                 k = self.keeping[pkg]
-                if len(k) > 1:
+                kx = k - set((pkg,))
+                if kx:
                     sys.stdout.write("%s is keeping %d packages installed: %s\n"
-                                     % (str(pkg), len(k) - 1,
-                                        ", ".join(str(p) for p in k if p is not pkg)))
+                                     % (str(pkg), len(kx), pliststr(kx)))
 
                 sys.stdout.write("Keep %s [Synixq] ? " % str(pkg))
                 act = sys.stdin.read(1).lower()
@@ -107,11 +112,23 @@ class YumFoster(yum.YumBase):
                 f.write(n + '\n')
             f.close()
 
-            if os.geteuid() != 0:
-                print "Error: Cannot remove packages as a user, must be root"
-                sys.exit(1)
+            if droppers:
+                while True:
+                    sys.stdout.write("\n%s\nRemove %d packages? "
+                                     % (pliststr(droppers), len(droppers)))
 
-            remove_packages(droppers)
+                    act = sys.stdin.read(1).lower()
+                    sys.stdout.write('%s\n' % act)
+                    if act == 'y':
+                        break
+                    elif act == 'n':
+                        return
+
+                if os.geteuid() != 0:
+                    print "Error: Cannot remove packages as a user, must be root"
+                    sys.exit(1)
+
+                remove_packages(droppers)
 
 oldtermios = None
 try:
